@@ -1,48 +1,66 @@
 package com.cdrundle.scanFile;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Properties;
 
 public class ScanThread extends Thread {
-	private static final String prooertiesFilePath = "src/params.properties";
+	/**
+	 * 已经上传的标志
+	 */
+	private String HAS_UPLOAD;
+	/**
+	 * 已经扫描的标志
+	 */
+	private String HAS_SCAN;
+	/**
+	 * 当前机器的编码
+	 */
+	private String MACHINE_CODE;
+	/**
+	 * 间隔的扫描时间
+	 */
+	private Integer SCAN_TIME; 
+	/**
+	 * 上传成功的标志
+	 */
+	private String UPLOAD_SUCCESS;
+	/**
+	 * 文件扫描根目录
+	 */
+	private String BASE_FILE_PATH;
+	/**
+	 * 接口请求地址
+	 */
+	private String REQUST_URL;
+	
+	public ScanThread(String hasUpload,String hasScan,String machineCode,Integer scanTime,String uploadSuccess,String baseFilePath,String requstUrl){
+		this.HAS_UPLOAD = hasUpload;
+		this.HAS_SCAN = hasScan;
+		this.MACHINE_CODE = machineCode;
+		this.SCAN_TIME = scanTime;
+		this.UPLOAD_SUCCESS = uploadSuccess;
+		this.BASE_FILE_PATH = baseFilePath;
+		this.REQUST_URL = requstUrl;
+	}
+	
+	
 	public void run() {
         while(true){
-				Properties properties = new Properties();
-				FileInputStream in;
-				int time = 60;
 				try {  
-		            in = new FileInputStream(prooertiesFilePath);  
-		            properties.load(in);//
-		            in.close();
-		            //String hasScanList = properties.getProperty("HAS_SCAN_FILE_LIST");                                                                                                         
-		            //System.out.println("===已经扫描过的文件列表==="+hasScanList);
-		            time = Integer.parseInt(properties.getProperty("SCAN_TIME"));
-		            String uploadFlag = properties.getProperty("HAS_UPLOAD");
-		            String scanFlag = properties.getProperty("HAS_SCAN");
 		           //设置扫描的间隔时间
-		            sleep(time*1000);
+		            sleep(SCAN_TIME*1000);
 		            System.out.println("======扫描======"+new Date());
 		            ArrayList<Object> willScanList = new ArrayList<>();
-					//ArrayList<Object> willScanList = FolderFileScanner.scanFilesWithList(properties.getProperty("BASE_FILE_PATH"),willScanList,hasScanList);
-		            willScanList = FolderFileScanner.scanFilesWithFileName(properties.getProperty("BASE_FILE_PATH"),willScanList,uploadFlag,scanFlag);
+		            willScanList = FolderFileScanner.scanFilesWithFileName(BASE_FILE_PATH,willScanList,HAS_UPLOAD,HAS_SCAN);
 					if(willScanList.size()>0){
 						for(Object obj :  willScanList){
-							String result = ExplainAndUpload.sendPostFun(String.valueOf(obj),properties.getProperty("MACHINE_CODE"),properties.getProperty("REQUST_URL"));
-							if(result.indexOf(properties.getProperty("UPLOAD_SUCCESS"))>-1){
-								FolderFileScanner.reNameHasScanFile(String.valueOf(obj), uploadFlag);
+							String result = ExplainAndUpload.sendPostFun(String.valueOf(obj),MACHINE_CODE,REQUST_URL);
+							if(result.indexOf(UPLOAD_SUCCESS)>-1){
+								FolderFileScanner.reNameHasScanFile(String.valueOf(obj), HAS_UPLOAD);
 							}else{
-								FolderFileScanner.reNameHasScanFile(String.valueOf(obj), scanFlag);
+								FolderFileScanner.reNameHasScanFile(String.valueOf(obj), HAS_SCAN);
 							}
-							//hasScanList += "["+String.valueOf(obj)+"]";
 						}
-//						properties.setProperty("HAS_SCAN_FILE_LIST",hasScanList);
-//			            FileOutputStream out = new FileOutputStream(prooertiesFilePath);
-//			            properties.store(out, "");
-//			            out.flush();
-//			            out.close();
 					}
 		        } catch (Exception e) {
 		            e.printStackTrace();  
